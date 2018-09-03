@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Parcelle index{% endblock %}
+
+{% block body %}
+    <h1>Parcelle index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>IlotNumber</th>
+                <th>TitleForExploitant</th>
+                <th>Surface</th>
+                <th>IdParcelleFMIS</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for parcelle in parcelles %}
+            <tr>
+                <td>{{ parcelle.id }}</td>
+                <td>{{ parcelle.title }}</td>
+                <td>{{ parcelle.ilotNumber }}</td>
+                <td>{{ parcelle.titleForExploitant }}</td>
+                <td>{{ parcelle.surface }}</td>
+                <td>{{ parcelle.idParcelleFMIS }}</td>
+                <td>
+                    <a href="{{ path('parcelle_show', {'id': parcelle.id}) }}">show</a>
+                    <a href="{{ path('parcelle_edit', {'id': parcelle.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="7">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('parcelle_new') }}">Create new</a>
+{% endblock %}

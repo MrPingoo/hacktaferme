@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier une session{% endblock %}
+
+{% block body %}
+    <div class="content-wrapper">
+        <section class="content-header">
+            <h1>Modifier une session</h1>
+            <ol class="breadcrumb">
+                <li><a href="{{ path('app_site') }}"><i class="fa fa-dashboard"></i> Accueil</a></li>
+                <li><a href="#">Modifier une session</a></li>
+            </ol>
+        </section>
+
+        <section class="content">
+            <div class="row">
+                <!-- left column -->
+                <div class="col-xs-12">
+                    <!-- general form elements -->
+                    <div class="box box-primary">
+                        <!-- /.box-header -->
+                        <!-- form start -->
+                        <form role="form">
+                            <div class="box-body">
+                                {{ include('work/_form.html.twig', {'button_label': 'Mise à jour'}) }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

@@ -1,0 +1,248 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Work{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        #map {
+            height: 500px;
+            width: 500px;
+            position: relative;
+        }
+        .modal {
+            text-align: center;
+            padding: 0!important;
+        }
+
+        .modal:before {
+            content: '';
+            display: inline-block;
+            /*height: 100%;*/
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+
+        .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                Suivi
+            </h1>
+        </section>
+        <br />
+        <div id="map" class="result-map-wrapper"></div>
+        <section class="content">
+            <br />
+            <a href="{{ path('work_step_cinq', {'id' : work.id}) }}" class="btn btn-default btn-lg btn-block">Cuve en plus</a>
+            <br />
+            <a id="modalBtn" class="btn btn-primary btn-lg btn-block">Fin</a>
+        </section>
+        <div class="result"></div>
+
+        </section>
+    </div>
+    <div class="modal fade" id="modalParcelle">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Session enregistrée</h4>
+                </div>
+                <div class="modal-body" style="">
+                    <p class="text-center"><i class="fa fa-check fa-6" style="color: green; font-size:20em;" aria-hidden="true"></i></p>
+                    <a href="{{ path('app_site') }}" class="btn btn-default btn-lg btn-block" id="simulation">Vous allez être redirigé vers l'accueil dans <span id="timer">10</span> secondes ...</a>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+{% endblock %}
+
+{% block javascripts %}
+
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDllalVL-ayFv4Bl5b5mRiEOQSLlMoLlcU&sensor=false">
+    </script>
+    <script>
+        var map;
+        var markers = [];
+        google.maps.Polygon.prototype.Contains = function (point) {
+            var crossings = 0,
+                path = this.getPath();
+
+            // for each edge
+            for (var i = 0; i < path.getLength(); i++) {
+                var a = path.getAt(i),
+                    j = i + 1;
+                if (j >= path.getLength()) {
+                    j = 0;
+                }
+                var b = path.getAt(j);
+                if (rayCrossesSegment(point, a, b)) {
+                    crossings++;
+                }
+            }
+
+            // odd number of crossings?
+            return (crossings % 2 == 1);
+
+            function rayCrossesSegment(point, a, b) {
+                var px = point.lng(),
+                    py = point.lat(),
+                    ax = a.lng(),
+                    ay = a.lat(),
+                    bx = b.lng(),
+                    by = b.lat();
+                if (ay > by) {
+                    ax = b.lng();
+                    ay = b.lat();
+                    bx = a.lng();
+                    by = a.lat();
+                }
+                // alter longitude to cater for 180 degree crossings
+                if (px < 0) {
+                    px += 360;
+                }
+                if (ax < 0) {
+                    ax += 360;
+                }
+                if (bx < 0) {
+                    bx += 360;
+                }
+
+                if (py == ay || py == by) py += 0.00000001;
+                if ((py > by || py < ay) || (px > Math.max(ax, bx))) return false;
+                if (px < Math.min(ax, bx)) return true;
+
+                var red = (ax != bx) ? ((by - ay) / (bx - ax)) : Infinity;
+                var blue = (ax != px) ? ((py - ay) / (px - ax)) : Infinity;
+                return (blue >= red);
+
+            }
+
+        };
+        var coordonate = {{ boundaries|json_encode|raw }}; // [{"lat":48.22736773604945,"lng":6.207759342971803},{"lat":48.22758070909316,"lng":6.208041146785814},{"lat":48.22806943094238,"lng":6.208743882625298},{"lat":48.22843841665471,"lng":6.209290496474307},{"lat":48.22846197820975,"lng":6.209326473793429},{"lat":48.22779270585169,"lng":6.210019348242299},{"lat":48.22716764334366,"lng":6.210659909595804},{"lat":48.227002015669306,"lng":6.210357596353957},{"lat":48.22601160280819,"lng":6.211381301012753},{"lat":48.22314699441858,"lng":6.206671401390875},{"lat":48.22317193442868,"lng":6.206634416080973},{"lat":48.22344367640132,"lng":6.206231366029025},{"lat":48.224914833555445,"lng":6.204049306901663},{"lat":48.225653394493236,"lng":6.205089399248816},{"lat":48.22623529332493,"lng":6.20589525227407},{"lat":48.22668349226526,"lng":6.206620647289599},{"lat":48.22675817907731,"lng":6.206759368283174},{"lat":48.22690863296985,"lng":6.20704841372206},{"lat":48.22706119123012,"lng":6.207320957847162},{"lat":48.22725552509816,"lng":6.207609373866408},{"lat":48.22736773604945,"lng":6.207759342971803}];
+        var point = new google.maps.LatLng(coordonate[0][0]['lat'], coordonate[0][0]['lat']);
+        var polygon = new google.maps.Polygon({path:coordonate});
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14.6,
+                center: coordonate[0][0],
+                mapTypeId: 'satellite',
+                scrollwheel: false,
+                disableDefaultUI: true, // a way to quickly hide all controls
+                mapTypeControl: false,
+                scaleControl: true,
+                zoomControl: false,
+                streetViewControl: false,
+                mapTypeControl: false
+            });
+
+            var bermudaTriangle = new google.maps.Polygon({
+                paths: coordonate,
+                strokeColor: '#009900',
+                strokeOpacity: 0.8,
+                strokeWeight: 3,
+                fillColor: '#009900',
+                fillOpacity: 0.35
+            });
+
+            //création du marqueur
+            var marqueur = new google.maps.Marker({
+                position: new google.maps.LatLng(48.22936773604944, 6.207759342971800),
+                map: map
+            });
+            markers.push(marqueur);
+            bermudaTriangle.setMap(map);
+
+        }
+
+        function setMapOnAll(map) {
+            for (var i = 0; i < markers.length; i++) {
+                markers[i].setMap(map);
+            }
+        }
+
+        initMap();
+
+        if (polygon.Contains(point)) {
+            // point is inside polygon
+            console.log('ok');
+        } else {
+            console.log('non ok');
+        }
+
+
+        Array.prototype.delayedForEach = function(callback, timeout, thisArg, done){
+            var i = 0,
+                l = this.length,
+                self = this;
+
+            var caller = function() {
+                callback.call(thisArg || self, self[i], i, self);
+                if(++i < l) {
+                    setTimeout(caller, timeout);
+                } else if(done) {
+                    setTimeout(done, timeout);
+                }
+            };
+
+            caller();
+        };
+
+        /*
+        function circle() {
+            var testArray = [{'0' : 48.9585761, '1' : 4.3615099},{'0' : 48.9585304, '1' : 4.3614852},{'0' : 48.9584425, '1' : 4.3614726},{'0' : 48.9583988, '1' : 4.3615084},{'0' : 48.9583351, '1' : 4.3616424},{'0' : 48.9583618, '1' : 4.3617786},{'0' : 48.9582906, '1' : 4.36185},{'0' : 48.9582139, '1' : 4.3619269},{'0' : 48.9581166, '1' : 4.3620244},{'0' : 48.9580064, '1' : 4.3621349},{'0' : 48.9580064, '1' : 4.3621349},{'0' : 48.9581166, '1' : 4.3620244},{'0' : 48.9582139, '1' : 4.3619269},{'0' : 48.9582906, '1' : 4.36185},{'0' : 48.9583618, '1' : 4.3617786},{'0' : 48.9583351, '1' : 4.3616424},{'0' : 48.9583988, '1' : 4.3615084},{'0' : 48.9584425, '1' : 4.3614726},{'0' : 48.9585304, '1' : 4.3614852},{'0' : 48.9585761, '1' : 4.3615099}];
+            testArray.delayedForEach(function(coordinate) {
+                setMapOnAll(null);
+                markers = [];
+                //création du marqueur
+                var marqueur = new google.maps.Marker({
+                    position: new google.maps.LatLng(coordinate[0], coordinate[1]),
+                    map: map
+                });
+                markers.push(marqueur);
+            }, 100, null, function() {
+                circle();
+            });
+        }
+        */
+        $('#simulation').on('click', function (e) {
+            // var testArray = [{'0' : 48.236839, '1' : 6.206055}, { '0' : 48.235973, '1' : 6.207921}, {'0' : 48.234485, '1' : 6.211143}, {'0' : 48.233356, '1' : 6.211765}, {'0' : 48.231473, '1' :  6.212132}, {'0' : 48.230155, '1' :  6.211849}, {'0' : 48.229139, '1' : 6.210181}, {'0': 48.228705, '1' : 6.210549} ];
+            // circle();
+        });
+
+        $('#modalSubmit').on('click', function (e) {
+            e.preventDefault();
+            $('#form_work').submit();
+            return false;
+        });
+
+        $('#modalReturn').on('click', function (e) {
+            $('#modalParcelle').modal('toggle');
+        });
+        $('#modalBtn').on('click', function (e) {
+            $('#modalParcelle').modal('toggle');
+            $.post( "/voice", { tts: "Session enregistrée" }, function( data ) {
+                $( ".result" ).html( data );
+            });
+            var timerArray = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+            timerArray.delayedForEach(function(time) {
+                $('#timer').html(time);
+            }, 1000, null, function() {
+                $('#simulation').click();
+                $(location).attr('href', 'https://hacktaferme.le-codex.com/')
+            });
+        });
+
+
+    </script>
+{% endblock %}

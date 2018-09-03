@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Work{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        #map {
+            height: 500px;
+            width: 500px;
+        }
+        .modal-dialog {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .modal-content {
+            height: auto;
+            min-height: 100%;
+            border-radius: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            Session enregistrée
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <br />
+        <br />
+        <br />
+        <p class="text-center"><i class="fa fa-check fa-6" style="color: green; font-size:20em;" aria-hidden="true"></i></p>
+        <a href="{{ path('app_site') }}" class="btn btn-default btn-lg btn-block" id="simulation">Revenir à l'accueil</a>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+
+{% endblock %}

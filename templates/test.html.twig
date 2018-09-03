@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>HTML5 : Géolocalisation</title>
+</head>
+<body>
+    <div class="result"></div>
+</body>
+<script src="{{ asset('theme/bower_components/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $.post( "/voice", { tts: "Test de phrase" }, function( data ) {
+        $( ".result" ).html( data );
+    });
+</script>
+</html>

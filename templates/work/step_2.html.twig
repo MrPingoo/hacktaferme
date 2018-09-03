@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Work{% endblock %}
+
+{% block body %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            Produits
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+            <div class="col-lg-6 col-xs-12">
+
+                {{ form_start(form, {'attr': {'id': 'form_work'}}) }}
+                    <div class="box-body">
+                        <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Quantité</th>
+                                <th>Unité</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for workproduct in work.workproduct %}
+                                <tr>
+                                    <td>{{ workproduct.product.title }}</td>
+                                    <td>{{ workproduct.product.quantity }}</td>
+                                    <td>{{ workproduct.product.unit }}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-primary"><i class="fa fa-edit"></i></a>
+                                        <a href="#" class="btn btn-danger"><i class="fa fa-remove"></i></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <br />
+                    <div class="col-md-12 text-center">
+                    {{ form_widget(form.new, { 'label': 'Scanner un autre produit', 'attr' : {'class' : 'btn-lg btn-block'}}) }}
+                    <br />
+                    <br />
+                        {{ form_widget(form.next, { 'label': 'Valider', 'attr' : {'class' : 'btn-primary btn-lg btn-block'} }) }}
+                    </div>
+                {{ form_end(form) }}
+
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+
+{% endblock %}

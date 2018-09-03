@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Work{% endblock %}
+
+{% block body %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            Produit - Scan auto
+        </h1>
+    </section>
+
+            <!-- Small boxes (Stat box) -->
+
+            <!-- Div to show the scanner -->
+    <br />
+            <div id="scanner-container"></div>
+            <div class="result"></div>
+
+            <div style="display: none;">
+                {{ include('work/_form.html.twig') }}
+            </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script type="text/javascript">
+
+        <!-- https://ourcodeworld.com/articles/read/460/how-to-create-a-live-barcode-scanner-using-the-webcam-in-javascript -->
+        $( document ).ready(function() {
+            var send = false;
+            var _scannerIsRunning = false;
+
+            function startScanner() {
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#scanner-container'),
+                        constraints: {
+                            width: window.innerWidth,
+                            height: window.innerHeight,
+                            facingMode: "environment"
+                        },
+                    },
+                    decoder: {
+                        readers: [
+                            "ean_reader",
+                            "ean_8_reader",
+                            "codabar_reader"
+                        ],
+                        debug: {
+                            showCanvas: true,
+                            showPatches: true,
+                            showFoundPatches: true,
+                            showSkeleton: true,
+                            showLabels: true,
+                            showPatchLabels: true,
+                            showRemainingPatchLabels: true,
+                            boxFromPatches: {
+                                showTransformed: true,
+                                showTransformedBox: true,
+                                showBB: true
+                            }
+                        }
+                    },
+
+                }, function (err) {
+                    if (err) {
+                        console.log(err);
+                        return
+                    }
+
+                    console.log("Initialization finished. Ready to start");
+                    Quagga.start();
+
+                    // Set flag to is running
+                    _scannerIsRunning = true;
+                });
+
+                Quagga.onProcessed(function (result) {
+                });
+
+
+                Quagga.onDetected(function (result) {
+                    if(!send){
+                        $('#form_product').val(result.codeResult.code);
+                        $("#form_work").submit();
+                        send = true;
+                    }
+                });
+            }
+
+            startScanner();
+        });
+
+    </script>
+{% endblock %}

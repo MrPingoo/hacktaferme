@@ -1,0 +1,204 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Parcellaire{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+            position: relative;
+        }
+        .modal {
+            text-align: center;
+            padding: 0!important;
+        }
+
+        .modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+
+        .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                Mes parcelles
+            </h1>
+        </section>
+        <section class="content">
+            <div class="row">
+                <div class="col-lg-6">
+                    <br />
+                    <div id="map" class="result-map-wrapper"></div>
+                    <div class="result"></div>
+                </div>
+                <div class="col-lg-6">
+                    <br />
+                    <div class="box">
+                        <div class="box-header">
+                            <h3 class="box-title">Liste de toutes mes parcelles</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                            <table id="work" class="table table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Numéro îlot</th>
+                                    <th>Surface</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for p in parcelles %}
+                                    <tr>
+                                        <td>{{ p.title }}</td>
+                                        <td>{{ p.ilotNumber }}</td>
+                                        <td>{{ p.surface }} ha</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDllalVL-ayFv4Bl5b5mRiEOQSLlMoLlcU&sensor=false">
+    </script>
+    <script>
+        var map;
+        var markers = [];
+        google.maps.Polygon.prototype.Contains = function (point) {
+            var crossings = 0,
+                path = this.getPath();
+
+            // for each edge
+            for (var i = 0; i < path.getLength(); i++) {
+                var a = path.getAt(i),
+                    j = i + 1;
+                if (j >= path.getLength()) {
+                    j = 0;
+                }
+                var b = path.getAt(j);
+                if (rayCrossesSegment(point, a, b)) {
+                    crossings++;
+                }
+            }
+
+            // odd number of crossings?
+            return (crossings % 2 == 1);
+
+            function rayCrossesSegment(point, a, b) {
+                var px = point.lng(),
+                    py = point.lat(),
+                    ax = a.lng(),
+                    ay = a.lat(),
+                    bx = b.lng(),
+                    by = b.lat();
+                if (ay > by) {
+                    ax = b.lng();
+                    ay = b.lat();
+                    bx = a.lng();
+                    by = a.lat();
+                }
+                // alter longitude to cater for 180 degree crossings
+                if (px < 0) {
+                    px += 360;
+                }
+                if (ax < 0) {
+                    ax += 360;
+                }
+                if (bx < 0) {
+                    bx += 360;
+                }
+
+                if (py == ay || py == by) py += 0.00000001;
+                if ((py > by || py < ay) || (px > Math.max(ax, bx))) return false;
+                if (px < Math.min(ax, bx)) return true;
+
+                var red = (ax != bx) ? ((by - ay) / (bx - ax)) : Infinity;
+                var blue = (ax != px) ? ((py - ay) / (px - ax)) : Infinity;
+                return (blue >= red);
+
+            }
+
+        };
+        var coordonate = {{ boundaries|json_encode|raw }};
+        var point = new google.maps.LatLng(coordonate[0][0]['lat'], coordonate[0][0]['lat']);
+        var polygon = new google.maps.Polygon({path:coordonate});
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 15.5,
+                center: coordonate[0][0],
+                mapTypeId: 'satellite',
+                scrollwheel: true,
+                disableDefaultUI: true, // a way to quickly hide all controls
+                mapTypeControl: false,
+                scaleControl: true,
+                zoomControl: false,
+                streetViewControl: false,
+                mapTypeControl: false
+            });
+
+            var bermudaTriangle = new google.maps.Polygon({
+                paths: coordonate,
+                strokeColor: '#009900',
+                strokeOpacity: 0.8,
+                strokeWeight: 3,
+                fillColor: '#009900',
+                fillOpacity: 0.35
+            });
+
+            bermudaTriangle.setMap(map);
+        }
+
+        initMap();
+
+        if (polygon.Contains(point)) {
+            // point is inside polygon
+            console.log('ok');
+        } else {
+            console.log('non ok');
+        }
+
+
+        Array.prototype.delayedForEach = function(callback, timeout, thisArg, done){
+            var i = 0,
+                l = this.length,
+                self = this;
+
+            var caller = function() {
+                callback.call(thisArg || self, self[i], i, self);
+                if(++i < l) {
+                    setTimeout(caller, timeout);
+                } else if(done) {
+                    setTimeout(done, timeout);
+                }
+            };
+
+            caller();
+        };
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Work{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        #map {
+            height: 500px;
+            width: 500px;
+        }
+        .modal-dialog {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .modal-content {
+            height: auto;
+            min-height: 100%;
+            border-radius: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            Détection de parcelle
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <section class="content">
+            <br />
+            <a href="{{ path('work_step_validation', {'id' : work.id}) }}" class="btn btn-default btn-lg btn-block">Nouvelle Parcelle</a>
+            <br />
+            <a href="{{ path('work_step_validation', {'id' : work.id}) }}" class="btn btn-primary btn-lg btn-block">Session terminée</a>
+        </section>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{{ form_start(form, {'attr': {'id': 'form_work'}}) }}
+    <div class="col-xs-12">
+        {{ form_widget(form) }}
+    </div>
+    <div class="row">
+        <div class="col-sm-6 col-xs-12">
+            <div class="form-group">
+                <h3>Les parcelles</h3>
+                {% for workparcelle in work.workparcelle %}
+                    <div>
+                        {{ workparcelle.parcelle.title }} - {{ workparcelle.parcelle.surface }} HA
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon" id="basic-addon1">Surface travaillée</span>
+                        <input type="text" value="45" class="form-control">
+                        <span class="input-group-addon" id="basic-addon2">soit 100%</span>
+                    </div>
+                    <hr>
+                {% endfor %}
+            </div>
+            <a href="#">Ajouter une parcelle travaillée dans cette session</a>
+        </div>
+
+        <div class="col-sm-6 col-xs-12">
+            <div class="form-group">
+                <h3>Les produits</h3>
+
+                {% for workproduct in work.workproduct %}
+                    <div>
+                        {{ workproduct.product.title }}
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon" id="basic-addon1">Quantité pulvérisé total</span>
+                        <input type="text" value="{{ workproduct.product.quantity }}" class="form-control">
+                        <span class="input-group-addon" id="basic-addon2">{{ workproduct.product.unit }}</span>
+                    </div>
+                    <hr>
+                {% endfor %}
+                <a href="#">Ajouter un produit travaillé dans cette session</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xs-12">
+            <button class="btn">{{ button_label|default('Save') }}</button>
+    </div>
+{{ form_end(form) }}

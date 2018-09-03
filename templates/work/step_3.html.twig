@@ -1,0 +1,262 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Work{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        #map {
+            height: 500px;
+            width: 500px;
+            position: relative;
+        }
+        .modal {
+            text-align: center;
+            padding: 0!important;
+        }
+
+        .modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+
+        .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            Suivi
+        </h1>
+    </section>
+        <br />
+        <div id="map" class="result-map-wrapper"></div>
+        <div class="modal fade" id="modalParcelle">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Vous êtes sur la parcelle <span style="color: #367FAA;">{{ parcelle.title }}</span>, voulez vous l'intégrer dans les surfaces traitées ?</h4>
+                    </div>
+                    <div class="modal-body" style="display: none;">
+                        {{ form_start(form, {'attr': {'id': 'form_work'}}) }}
+                        {{ form_widget(form) }}
+                        {{ form_end(form) }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-lg btn-block" id="modalReturn">Non</button>
+                        <button type="button" class="btn btn-primary btn-lg btn-block" id="modalSubmit" data-dismiss="modal">Oui (validation automatique dans <span id="timer">10</span>)</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+        <div class="result"></div>
+    <button type="button" class="btn btn-default btn-lg btn-block" id="simulation">Simulation</button>
+    <button type="button" class="btn btn-default btn-lg btn-block" onclick="getLocation()" id="geoloca">Me géolocaliser</button>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDllalVL-ayFv4Bl5b5mRiEOQSLlMoLlcU&sensor=false">
+    </script>
+        <script>
+            var map;
+            var markers = [];
+            google.maps.Polygon.prototype.Contains = function (point) {
+                var crossings = 0,
+                    path = this.getPath();
+
+                // for each edge
+                for (var i = 0; i < path.getLength(); i++) {
+                    var a = path.getAt(i),
+                        j = i + 1;
+                    if (j >= path.getLength()) {
+                        j = 0;
+                    }
+                    var b = path.getAt(j);
+                    if (rayCrossesSegment(point, a, b)) {
+                        crossings++;
+                    }
+                }
+
+                // odd number of crossings?
+                return (crossings % 2 == 1);
+
+                function rayCrossesSegment(point, a, b) {
+                    var px = point.lng(),
+                        py = point.lat(),
+                        ax = a.lng(),
+                        ay = a.lat(),
+                        bx = b.lng(),
+                        by = b.lat();
+                    if (ay > by) {
+                        ax = b.lng();
+                        ay = b.lat();
+                        bx = a.lng();
+                        by = a.lat();
+                    }
+                    // alter longitude to cater for 180 degree crossings
+                    if (px < 0) {
+                        px += 360;
+                    }
+                    if (ax < 0) {
+                        ax += 360;
+                    }
+                    if (bx < 0) {
+                        bx += 360;
+                    }
+
+                    if (py == ay || py == by) py += 0.00000001;
+                    if ((py > by || py < ay) || (px > Math.max(ax, bx))) return false;
+                    if (px < Math.min(ax, bx)) return true;
+
+                    var red = (ax != bx) ? ((by - ay) / (bx - ax)) : Infinity;
+                    var blue = (ax != px) ? ((py - ay) / (px - ax)) : Infinity;
+                    return (blue >= red);
+
+                }
+
+            };
+            var coordonate = {{ boundaries|json_encode|raw }}; // [{"lat":48.22736773604945,"lng":6.207759342971803},{"lat":48.22758070909316,"lng":6.208041146785814},{"lat":48.22806943094238,"lng":6.208743882625298},{"lat":48.22843841665471,"lng":6.209290496474307},{"lat":48.22846197820975,"lng":6.209326473793429},{"lat":48.22779270585169,"lng":6.210019348242299},{"lat":48.22716764334366,"lng":6.210659909595804},{"lat":48.227002015669306,"lng":6.210357596353957},{"lat":48.22601160280819,"lng":6.211381301012753},{"lat":48.22314699441858,"lng":6.206671401390875},{"lat":48.22317193442868,"lng":6.206634416080973},{"lat":48.22344367640132,"lng":6.206231366029025},{"lat":48.224914833555445,"lng":6.204049306901663},{"lat":48.225653394493236,"lng":6.205089399248816},{"lat":48.22623529332493,"lng":6.20589525227407},{"lat":48.22668349226526,"lng":6.206620647289599},{"lat":48.22675817907731,"lng":6.206759368283174},{"lat":48.22690863296985,"lng":6.20704841372206},{"lat":48.22706119123012,"lng":6.207320957847162},{"lat":48.22725552509816,"lng":6.207609373866408},{"lat":48.22736773604945,"lng":6.207759342971803}];
+            var point = new google.maps.LatLng(coordonate[0][0]['lat'], coordonate[0][0]['lat']);
+            var polygon = new google.maps.Polygon({path:coordonate});
+
+            function initMap() {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 14.6,
+                    center: coordonate[0][0],
+                    mapTypeId: 'satellite',
+                    scrollwheel: false,
+                    disableDefaultUI: true, // a way to quickly hide all controls
+                    mapTypeControl: false,
+                    scaleControl: true,
+                    zoomControl: true,
+                    streetViewControl: false,
+                    mapTypeControl: false
+                });
+
+                var bermudaTriangle = new google.maps.Polygon({
+                    paths: coordonate,
+                    strokeColor: '#009900',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 3,
+                    fillColor: '#009900',
+                    fillOpacity: 0.35
+                });
+
+                //création du marqueur
+                /*
+                var marqueur = new google.maps.Marker({
+                    position: new google.maps.LatLng(48.22936773604944, 6.207759342971800),
+                    map: map
+                });
+                markers.push(marqueur);
+                */
+                bermudaTriangle.setMap(map);
+
+            }
+
+            function setMapOnAll(map) {
+                for (var i = 0; i < markers.length; i++) {
+                    markers[i].setMap(map);
+                }
+            }
+
+            initMap();
+
+            if (polygon.Contains(point)) {
+                // point is inside polygon
+                console.log('ok');
+            } else {
+                console.log('non ok');
+            }
+
+
+            Array.prototype.delayedForEach = function(callback, timeout, thisArg, done){
+                var i = 0,
+                    l = this.length,
+                    self = this;
+
+                var caller = function() {
+                    callback.call(thisArg || self, self[i], i, self);
+                    if(++i < l) {
+                        setTimeout(caller, timeout);
+                    } else if(done) {
+                        setTimeout(done, timeout);
+                    }
+                };
+
+                caller();
+            };
+
+            function showPosition(position) {
+                setMapOnAll(null);
+                markers = [];
+                //création du marqueur
+                var marqueur = new google.maps.Marker({
+                    position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+                    map: map,
+                    icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                });
+                markers.push(marqueur);
+            }
+
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition);
+                }
+            }
+
+            $('#simulation').on('click', function (e) {
+                // {'0' : 48.9676986, '1' : 4.3524725},{'0' : 48.9675255, '1' : 4.3526353},{'0' : 48.9673896, '1' : 4.3527631},{'0' : 48.9671205, '1' : 4.3530159},{'0' : 48.9670276, '1' : 4.3531054},{'0' : 48.9669509, '1' : 4.3531819},{'0' : 48.9668807, '1' : 4.3532519},{'0' : 48.9667065, '1' : 4.3534257},{'0' : 48.9666061, '1' : 4.3535258},{'0' : 48.9665292, '1' : 4.3536013},{'0' : 48.9664508, '1' : 4.3536763},{'0' : 48.9663143, '1' : 4.3538073},{'0' : 48.9662297, '1' : 4.3538886},{'0' : 48.9661274, '1' : 4.3539869},{'0' : 48.9660227, '1' : 4.3540875},{'0' : 48.9658963, '1' : 4.3542088},{'0' : 48.965824, '1' : 4.3542775},{'0' : 48.9657011, '1' : 4.3543944},{'0' : 48.96561, '1' : 4.3544848},{'0' : 48.9655428, '1' : 4.3545515},{'0' : 48.9654709, '1' : 4.3546227},{'0' : 48.9654, '1' : 4.354693},{'0' : 48.9653219, '1' : 4.3547764},{'0' : 48.9652501, '1' : 4.3548532},{'0' : 48.9651668, '1' : 4.3549422},{'0' : 48.9649966, '1' : 4.3551241},{'0' : 48.9648751, '1' : 4.3552439},{'0' : 48.9647652, '1' : 4.3553474},{'0' : 48.9647097, '1' : 4.3553997},{'0' : 48.9646498, '1' : 4.355456},{'0' : 48.9645902, '1' : 4.3555123},{'0' : 48.9645084, '1' : 4.3555893},{'0' : 48.9644575, '1' : 4.3556388},{'0' : 48.9643917, '1' : 4.3557036},{'0' : 48.9642942, '1' : 4.3557998},{'0' : 48.9642128, '1' : 4.3558799},{'0' : 48.9639794, '1' : 4.35611},{'0' : 48.9637782, '1' : 4.3563001},{'0' : 48.9636879, '1' : 4.3563854},{'0' : 48.963509, '1' : 4.3565545},{'0' : 48.963415, '1' : 4.3566434},
+                // var testArray = [{'0' : 48.236839, '1' : 6.206055}, { '0' : 48.235973, '1' : 6.207921}, {'0' : 48.234485, '1' : 6.211143}, {'0' : 48.233356, '1' : 6.211765}, {'0' : 48.231473, '1' :  6.212132}, {'0' : 48.230155, '1' :  6.211849}, {'0' : 48.229139, '1' : 6.210181}, {'0': 48.228705, '1' : 6.210549} ];
+                // {'0' : 48.9632861, '1' : 4.3567664},{'0' : 48.9631181, '1' : 4.3569278},{'0' : 48.9630232, '1' : 4.357022},{'0' : 48.9629469, '1' : 4.3570978},{'0' : 48.9628765, '1' : 4.357168},{'0' : 48.9627913, '1' : 4.3572533},{'0' : 48.9626997, '1' : 4.3573449},{'0' : 48.9625235, '1' : 4.3575256},{'0' : 48.962444, '1' : 4.3576076},{'0' : 48.9623532, '1' : 4.3577013},{'0' : 48.9622927, '1' : 4.3577637},{'0' : 48.962233, '1' : 4.3578372},{'0' : 48.9621599, '1' : 4.3579274},{'0' : 48.9621073, '1' : 4.3579922},{'0' : 48.9619457, '1' : 4.3581915},{'0' : 48.9618868, '1' : 4.358265},{'0' : 48.9618181, '1' : 4.3583507},{'0' : 48.9617541, '1' : 4.3584305},{'0' : 48.9616493, '1' : 4.3585577},{'0' : 48.961583, '1' : 4.358635},{'0' : 48.9615182, '1' : 4.3587107},{'0' : 48.9614321, '1' : 4.358811},{'0' : 48.961246, '1' : 4.3590281},{'0' : 48.9611815, '1' : 4.3591058},{'0' : 48.9611244, '1' : 4.359175},{'0' : 48.9610517, '1' : 4.3592794},{'0' : 48.9609016, '1' : 4.3594948},{'0' : 48.9607863, '1' : 4.3596361},{'0' : 48.9607208, '1' : 4.3597165},{'0' : 48.9605049, '1' : 4.3599815},{'0' : 48.960424, '1' : 4.3600807},{'0' : 48.9603851, '1' : 4.3601285},{'0' : 48.9603096, '1' : 4.3602211},{'0' : 48.9602377, '1' : 4.3603093},{'0' : 48.960176, '1' : 4.360385},{'0' : 48.9601264, '1' : 4.3604366},
+                var testArray = [{'0' : 48.9600845, '1' : 4.3604803},{'0' : 48.9600104, '1' : 4.3605573},{'0' : 48.9599617, '1' : 4.3606081},{'0' : 48.9598938, '1' : 4.3606787},{'0' : 48.959849, '1' : 4.3607253},{'0' : 48.9597987, '1' : 4.3607776},{'0' : 48.9597618, '1' : 4.360816},{'0' : 48.9597183, '1' : 4.3608613},{'0' : 48.9596554, '1' : 4.3609267},{'0' : 48.9596054, '1' : 4.3609787},{'0' : 48.9595341, '1' : 4.3610529},{'0' : 48.9594871, '1' : 4.3611003},{'0' : 48.9594398, '1' : 4.3611479},{'0' : 48.9593912, '1' : 4.3611969},{'0' : 48.9593418, '1' : 4.3612453},{'0' : 48.9592757, '1' : 4.3613102},{'0' : 48.9592187, '1' : 4.361366},{'0' : 48.959166, '1' : 4.3614177},{'0' : 48.9590753, '1' : 4.3615067},{'0' : 48.9589966, '1' : 4.3615838},{'0' : 48.958918, '1' : 4.361618},{'0' : 48.9588486, '1' : 4.3616111},{'0' : 48.9587682, '1' : 4.3616031},{'0' : 48.9586632, '1' : 4.3616012},{'0' : 48.9586201, '1' : 4.3615469},{'0' : 48.9585761, '1' : 4.3615099}];
+                testArray.delayedForEach(function(coordinate) {
+                    setMapOnAll(null);
+                    markers = [];
+                    //création du marqueur
+                    var marqueur = new google.maps.Marker({
+                        position: new google.maps.LatLng(coordinate[0], coordinate[1]),
+                        map: map
+                    });
+                    markers.push(marqueur);
+                }, 100, null, function() {
+                    console.log("done!");
+                    $('#modalParcelle').modal();
+                    $.post( "/voice", { tts: "Vous êtes sur la parcelle {{ parcelle.title }} maïs, voulez vous l'intégrer dans les surfaces traitées ?" }, function( data ) {
+                        $( ".result" ).html( data );
+                    });
+                    var timerArray = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+                    timerArray.delayedForEach(function(time) {
+                        $('#timer').html(time);
+                    }, 1000, null, function() {
+                        $('#form_work').submit();
+                    });
+                });
+            });
+
+            $('#modalSubmit').on('click', function (e) {
+                e.preventDefault();
+                $('#form_work').submit();
+                return false;
+            });
+
+            $('#modalReturn').on('click', function (e) {
+                $('#modalParcelle').modal('toggle');
+            });
+
+        </script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends('base.html.twig') %}
+
+{% block body %}
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                Tableau de bord
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="#"><i class="fa fa-dashboard"></i> Accueil</a></li>
+            </ol>
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <!-- Small boxes (Stat box) -->
+            <div class="row">
+                <div class="col-lg-3 col-xs-6">
+                    <!-- small box -->
+                    <a href="{{ path('work_step_un') }}">
+                        <div class="small-box bg-aqua">
+                            <div class="inner">
+                                <h3>Session</h3>
+                                <p>Démarrer une session</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-bag"></i>
+                            </div>
+                            <span class="small-box-footer">Démarrer une session <i class="fa fa-arrow-circle-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+                <!-- ./col -->
+                <div class="col-lg-3 col-xs-6">
+                    <!-- small box -->
+                    <a href="{{ path('work_index') }}">
+                        <div class="small-box bg-green">
+                            <div class="inner">
+                                <h3>Archives</h3>
+                                <p>Historiques</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-stats-bars"></i>
+                            </div>
+                            <span class="small-box-footer">Voir toutes les sessions <i class="fa fa-arrow-circle-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+
+
+                <div class="col-lg-3 col-xs-6">
+                    <!-- small box -->
+                    <a href="{{ path('app_site_parcellaire') }}">
+                        <div class="small-box bg-red">
+                            <div class="inner">
+                                <h3>Parcelles</h3>
+                                <p>Parcellaires</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-pie-graph"></i>
+                            </div>
+                            <span class="small-box-footer">Voir toutes mes parcelles <i class="fa fa-arrow-circle-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-xs-6">
+                    <!-- small box -->
+                    <a href="{{ path('app_site_compte') }}">
+                        <div class="small-box bg-yellow">
+                            <div class="inner">
+                                <h3>Gestion</h3>
+                                <p>Mon compte</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-person-add"></i>
+                            </div>
+                            <span class="small-box-footer">Paramétrer mon compte <i class="fa fa-arrow-circle-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <!-- /.row -->
+
+        </section>
+        <!-- /.content -->
+    </div>
+
+
+{% endblock %}
